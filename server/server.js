@@ -2,10 +2,16 @@ const express = require("express");
 const path = require("path");
 const multer = require("multer");
 const mongoose  = require("mongoose");
+const cors = require('cors');
+
 const app = express();
+app.use(express.json({}))
+app.use(cors())
+app.use("/uploads",express.static(path.join(__dirname, "./uploads/")));
+
 const PORT = 5000;
-require("./model")
-const File = mongoose.model("file");
+const FileModel = require("./model")
+
 const router = express.Router();
 
 const storage = multer.diskStorage({
@@ -18,19 +24,28 @@ const storage = multer.diskStorage({
 const upload = multer({
    storage: storage,
    limits:{fileSize: 1000000},
-}).single("myfile");
+}).single("myfile")
 
-const obj =(req,res) => {
-   upload(req, res, () => {
-      const file = new File();
-      file.meta_data = req.file;
-      file.save().then(()=>{
-      res.send({message:"uploaded successfully"})
-      })
-   });
+const obj =(req,res,next) => {
+ try {    
+    upload(req, res,  () => {
+        next();
+     });
+ } catch (error) {
+    console.log(error)  
+ }
 }
 
-router.post("/fileupload", obj);
+router.post("/fileupload", obj, async (req,res)=>{
+    try {     
+        const file = new FileModel();
+        file.path = req.file.path;
+        await file.save()
+        res.status(200).send({"file":`${req.protocol}://${req.get('host')}/${file.path}`});
+    } catch (error) {
+        console.log(error)
+    }
+});
 
 app.use(router);
 

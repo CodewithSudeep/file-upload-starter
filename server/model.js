@@ -2,7 +2,9 @@ const mongoose = require('mongoose');
 
 
 const fileSchema = new mongoose.Schema({
-    meta_data:{}
+    path:{}
 });
 
-mongoose.model("file",fileSchema);
+const FileModel = mongoose.model("file",fileSchema);
+
+module.exports = FileModel
